@@ -1,10 +1,7 @@
 from osmexit import common
-from osmexit.common import Result
-
-
-class Ambiguous(object):
-    pass
-ambiguous = Ambiguous()
+from osmexit.result import (
+    Result, JointResult, UNKNOWN, SUCCESS, AMBIGUOUS, CONFLICT,
+)
 
 
 def assign_exits(node, way_in, ways_out):
@@ -22,14 +19,8 @@ def assign_exits(node, way_in, ways_out):
             results[k] = alg_results
 
     if not results:
-        return Result(Result.UNKNOWN)
-    if len(results) == 1 and results.values()[0] is not ambiguous:
-        return Result(Result.SUCCESS, results.keys()[0])
-    if len(results) == 1 and results.values()[0] is ambiguous:
-        return Result(Result.AMBIGUOUS)
-    if len(results) > 1:
-        return Result(Result.CONFLICT)
-    return 'huh?'
+        return None
+    return JointResult(results)
 
 
 def noref(node, way_in, ways_out):
@@ -48,7 +39,8 @@ def noref(node, way_in, ways_out):
     if not common.validate_tags(node['properties'], node_schema):
         return None
 
-    return ()
+    # No assignments when noref is yes
+    return Result(SUCCESS, ())
 
 
 def basic_junction(node, way_in, ways_out):
@@ -70,11 +62,11 @@ def basic_junction(node, way_in, ways_out):
 
     links = [w for w in ways_out if w['properties']['highway'] == 'motorway_link' ]
     if len(links) == 0:
-        return 'huh?'
+        return Result(UNKNOWN, msg='no motorway links')
     elif len(links) == 1:
-        return (links[0], node['properties']['ref'])
+        return Result(SUCCESS, solution=(links[0], node['properties']['ref']))
     else:
-        return ambiguous
+        return Result(AMBIGUOUS, msg='ref specified but not just one link out')
 
 
 def left_right_junction(node, way_in, ways_out):
@@ -105,7 +97,8 @@ def left_right_junction(node, way_in, ways_out):
         return None
 
     if len(ways_out) != 2:
-        return ambiguous 
+        msg = 'ref:left or ref:right specified but not 2 ways out'
+        return Result(AMBIGUOUS, msg=msg)
 
     azimuth_in = common.azimuth(way_in['geometry']['coordinates'][-2:])
     def az_sort(way):
@@ -113,13 +106,13 @@ def left_right_junction(node, way_in, ways_out):
         return common.delta_angle(azimuth_in, coords)
     ways_out = sorted(ways_out, key=az_sort)
 
-    ret = []
+    assignments = []
     if is_left_exit:
-        ret.append((ways_out[0], node['properties']['ref:left']))
+        assignments.append((ways_out[0], node['properties']['ref:left']))
     if is_right_exit:
-        ret.append((ways_out[1], node['properties']['ref:right']))
+        assignments.append((ways_out[1], node['properties']['ref:right']))
 
-    return ret
+    return Result(SUCCESS, solution=assignments)
 
 
 def junction_ref(node, way_in, ways_out):
@@ -138,14 +131,12 @@ def junction_ref(node, way_in, ways_out):
     if not 'motorway_junction' in node['properties']:
         return None
 
-    ret = []
+    assignments = []
     for w in ways_out:
         ref = w['properties'].get('junction:ref')
         if ref:
-            ret.append((w, ref))
+            assignments.append((w, ref))
 
-    if not ret:
+    if not assignments:
         return None
-    return ret
-
-
+    return Result(SUCCESS, solution=assignments)

@@ -1,17 +1,5 @@
 import math
 
-
-class Result(object):
-    SUCCESS = 1
-    CONFLICT = 2
-    AMBIGUOUS = 3
-    UNKNOWN = 4
-
-    def __init__(self, status, assignments=None):
-        self.status = status
-        self.assignment = assignments
-
-
 def validate_tags(tags, schema):
     for k, v in schema.items():
         if v == '*':
