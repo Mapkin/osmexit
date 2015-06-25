@@ -4,12 +4,11 @@ from osmexit.result import (
 )
 
 
-def assign_exits(node, way_in, ways_out):
+def assign_destination(node, way_in, ways_out):
     algos = {
-        'noref': noref,
-        'basic': basic_junction,
-        'left_right': left_right_junction,
-        'junction_ref': junction_ref,
+        'basic': basic_exit_to,
+        'left_right': left_right_exit_to,
+        'destination_way': destination_way,
     }
 
     results = {}
@@ -23,31 +22,11 @@ def assign_exits(node, way_in, ways_out):
     return JointResult(results)
 
 
-def noref(node, way_in, ways_out):
-    """
-    A motorway junction where the node has
-        highway=motorway_junction
-        noref=yes
-    
-    This indicates that there are no assignments to be made.
-
-    """
-    node_schema = {
-        'highway': 'motorway_junction',
-        'noref': 'yes',
-    }
-    if not common.validate_tags(node['properties'], node_schema):
-        return None
-
-    # No assignments when noref is yes
-    return Result(SUCCESS, ())
-
-
-def basic_junction(node, way_in, ways_out):
+def basic_exit_to(node, way_in, ways_out):
     """
     A simple motorway junction where the node has
         highway=motorway_junction
-        ref=*
+        exit_to=*
     and there is only one motorway_link
 
     It returns Ambiguous if there is more than one motorway_link
@@ -55,7 +34,7 @@ def basic_junction(node, way_in, ways_out):
     """
     node_schema = {
         'highway': 'motorway_junction',
-        'ref': '*',
+        'exit_to': '*',
     }
     if not common.validate_tags(node['properties'], node_schema):
         return None
@@ -64,18 +43,18 @@ def basic_junction(node, way_in, ways_out):
     if len(links) == 0:
         return Result(UNKNOWN, msg='no motorway links')
     elif len(links) == 1:
-        return Result(SUCCESS, solution=(links[0], node['properties']['ref']))
+        return Result(SUCCESS, solution=(links[0], node['properties']['exit_to']))
     else:
         return Result(AMBIGUOUS, msg='ref specified but not just one link out')
 
 
-def left_right_junction(node, way_in, ways_out):
+def left_right_exit_to(node, way_in, ways_out):
     """
     A motorway junction that splits into two links. The node has
         highway=motorway_junction
     and one or both of
-        ref:left=*
-        ref:right=*
+        exit_to:left=*
+        exit_to:right=*
 
     It returns Ambiguous if there are 3 connector roads, otherwise, left and
     right are assigned based on their geometries.
@@ -83,13 +62,13 @@ def left_right_junction(node, way_in, ways_out):
     """
     left_schema = {
         'highway': 'motorway_junction',
-        'ref:left': '*',
+        'exit_to:left': '*',
     }
     is_left_exit = common.validate_tags(node['properties'], left_schema)
 
     right_schema = {
         'highway': 'motorway_junction',
-        'ref:right': '*',
+        'exit_to:right': '*',
     }
     is_right_exit = common.validate_tags(node['properties'], right_schema)
 
@@ -97,7 +76,7 @@ def left_right_junction(node, way_in, ways_out):
         return None
 
     if len(ways_out) != 2:
-        msg = 'ref:left or ref:right specified but not 2 ways out'
+        msg = 'exit_to:left or exit_to:right specified but not 2 ways out'
         return Result(AMBIGUOUS, msg=msg)
 
     azimuth_in = common.azimuth(way_in['geometry']['coordinates'][-2:])
@@ -108,14 +87,14 @@ def left_right_junction(node, way_in, ways_out):
 
     assignments = []
     if is_left_exit:
-        assignments.append((ways_out[0], node['properties']['ref:left']))
+        assignments.append((ways_out[0], node['properties']['exit_to:left']))
     if is_right_exit:
-        assignments.append((ways_out[1], node['properties']['ref:right']))
+        assignments.append((ways_out[1], node['properties']['exit_to:right']))
 
     return Result(SUCCESS, solution=assignments)
 
 
-def junction_ref(node, way_in, ways_out):
+def destination_way(node, way_in, ways_out):
     """
     The simplest way to define the exit ref
 
@@ -123,7 +102,7 @@ def junction_ref(node, way_in, ways_out):
     has
         highway=motorway_junction
     The connecting roads have
-        junction:ref
+        destination=*
 
     There is no ambiguity for this method.
 
@@ -136,7 +115,7 @@ def junction_ref(node, way_in, ways_out):
 
     assignments = []
     for w in ways_out:
-        ref = w['properties'].get('junction:ref')
+        ref = w['properties'].get('destination')
         if ref:
             assignments.append((w, ref))
 
