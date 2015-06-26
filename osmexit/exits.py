@@ -60,11 +60,11 @@ def basic_junction(node, way_in, ways_out):
     if not common.validate_tags(node['properties'], node_schema):
         return None
 
-    links = [w for w in ways_out if w['properties']['highway'] == 'motorway_link' ]
+    links = [w for w in ways_out if w['properties'].get('highway') == 'motorway_link']
     if len(links) == 0:
         return Result(UNKNOWN, msg='no motorway links')
     elif len(links) == 1:
-        return Result(SUCCESS, solution=(links[0], node['properties']['ref']))
+        return Result(SUCCESS, solution=[(links[0], node['properties']['ref'])])
     else:
         return Result(AMBIGUOUS, msg='ref specified but not just one link out')
 
