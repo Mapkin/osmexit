@@ -24,8 +24,10 @@ different methods have conflicting results, and also when the tags are
 ambiguous and no assignment can be made.  
 
 Conflicting and ambiguous outputs should be cause for further investigation
-and cleanup using tools like `to-fix<http://osmlab.github.io/to-fix/>`_ or 
-`maproulette<http://maproulette.org/>`_.
+and cleanup using tools like 
+`to-fix <http://osmlab.github.io/to-fix/>`__ 
+or 
+`maproulette <http://maproulette.org/>`__.
 
 Note that there's the critical assumption that exit information can and should
 be determined by looking at the junction node and its immediately attached
@@ -75,6 +77,6 @@ an ambiguous situation.
 
 See also
 --------
-- `OSM Wiki page for motorway_junction<http://wiki.openstreetmap.org/wiki/Tag:highway%3Dmotorway_junction>`_.
-- `OSM Wiki page for destination=*<http://wiki.openstreetmap.org/wiki/Key:destination>`_.
-- `OSM Wiki page for exit_to=*<https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=openstreetmap%20exit_to>`_.
+- `OSM Wiki page for motorway_junction <http://wiki.openstreetmap.org/wiki/Tag:highway%3Dmotorway_junction>`__.
+- `OSM Wiki page for destination=* <http://wiki.openstreetmap.org/wiki/Key:destination>`__.
+- `OSM Wiki page for exit_to=* <https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=openstreetmap%20exit_to>`__.
