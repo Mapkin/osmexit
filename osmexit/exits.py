@@ -13,10 +13,10 @@ def assign_exits(node, way_in, ways_out):
     }
 
     results = {}
-    for k, v in algos.items():
-        alg_results = v(node, way_in, ways_out)
+    for name, func in algos.items():
+        alg_results = func(node, way_in, ways_out)
         if alg_results:
-            results[k] = alg_results
+            results[name] = alg_results
 
     if not results:
         return None
@@ -128,9 +128,7 @@ def junction_ref(node, way_in, ways_out):
     There is no ambiguity for this method.
 
     """
-    node_schema = {
-        'highway': 'motorway_junction',
-    }
+    node_schema = {'highway': 'motorway_junction'}
     if not common.validate_tags(node['properties'], node_schema):
         return None
 
