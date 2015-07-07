@@ -1,5 +1,55 @@
 import math
 
+
+def iter_intersection_info(g):
+    for n in g.nodes_iter():
+        if g.node[n].get('highway') != 'motorway_junction':
+            continue
+        try:
+            info = build_intersection(g, n)
+        except:
+            continue
+        yield info
+
+
+def build_intersection(g, n):
+    node_coords = g.node[n]['coordinates']
+    node = {
+        'type': 'Feature',
+        'geometry': {
+            'type': 'Point',
+            'coordinates': node_coords,
+        },
+        'properties': g.node[n]
+    }
+
+    way_in_node = g.predecessors(n)
+    if len(way_in_node) > 1:
+        raise ValueError('Node {} has more than one way in'.format(node_coords))
+    way_in_node = way_in_node[0]
+    
+    way_in = feature_for_edge(g, way_in_node, n)
+    ways_out = [feature_for_edge(g, n, n_out) for n_out in g.successors(n)]
+
+    return node, way_in, ways_out
+
+
+def feature_for_edge(g, n1, n2):
+    feature = {
+        'type': 'Feature',
+        'geometry': {
+            'type': 'LineString',
+            'coordinates': [g.node[n1]['coordinates'], g.node[n2]['coordinates']],
+        },
+    }
+    props = g[n1][n2]['tags'].copy()
+    props['length'] = g[n1][n2]['length']
+    feature['properties'] = props
+
+    return feature
+
+
+
 def validate_tags(tags, schema):
     for k, v in schema.items():
         if v == '*':

@@ -10,6 +10,8 @@ class Result(object):
         self.solution = solution
         self.msg = msg
 
+empty_result = Result(UNKNOWN, msg="no results")
+
 
 class JointResult(object):
     def __init__(self, results):
